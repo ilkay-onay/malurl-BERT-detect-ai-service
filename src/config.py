@@ -2,21 +2,23 @@
 import torch
 
 class Config:
-    MODEL_NAME = "google-bert/bert-base-uncased"
+    MODEL_NAME = "answerdotai/ModernBERT-base" 
     MAX_LENGTH = 256
     
     OUTPUT_DIR = "outputs/"
     LOG_DIR = "logs/"
     PLOT_DIR = "plots/"
     
-    # Hyperparameters
-    BATCH_SIZE = 16 
-    EPOCHS = 5 # BERT usually converges in 3-5 epochs on 600k rows
-    LEARNING_RATE = 2e-5
+    BATCH_SIZE = 32 
+    EPOCHS = 5 
+    LEARNING_RATE = 5e-5 
     WEIGHT_DECAY = 0.01
-    WARMUP_STEPS = 500
-    PATIENCE = 3 # Early stopping patience
+    WARMUP_STEPS = 1000 
+    PATIENCE = 3 
     
-    # Hardware
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-    FP16 = True if torch.cuda.is_available() else False # Mixed precision only for Nvidia GPUs
+    
+    # NEW: Check if hardware supports BF16 (RTX 30/40/A-series)
+    # This is the modern standard for 2025.
+    USE_BF16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
+    USE_FP16 = torch.cuda.is_available() and not USE_BF16
