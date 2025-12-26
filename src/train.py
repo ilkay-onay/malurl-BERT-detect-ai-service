@@ -29,8 +29,10 @@ def train():
     for d in [Config.OUTPUT_DIR, Config.LOG_DIR, Config.PLOT_DIR]:
         if not os.path.exists(d): os.makedirs(d)
     
-    if not os.path.exists("data/processed_dataset.csv") and not IS_BABY_RUN:
-        print("❌ ERROR: processed_dataset.csv missing. Run data_manager.py first.")
+    # G�NCEL KONTROL: Fiziksel split dosyalar\u0131 var m\u0131?
+    required_files = ["data/train.csv", "data/val.csv", "data/test.csv"]
+    if not all(os.path.exists(f) for f in required_files) and not IS_BABY_RUN:
+        print("\u274c ERROR: Physical split files (train/val/test.csv) missing. Run src/data_prep.py first.")
         sys.exit(1)
 
     # --- 2. Load Data ---
@@ -76,12 +78,14 @@ def train():
         per_device_eval_batch_size=Config.BATCH_SIZE,
         learning_rate=Config.LEARNING_RATE,
         weight_decay=Config.WEIGHT_DECAY,
-        warmup_steps=10 if IS_BABY_RUN else Config.WARMUP_STEPS,
         
-        lr_scheduler_type="cosine", 
+        # BURAYI GÜNCELLEDİK: warmup_steps yerine warmup_ratio kullanıyoruz
+        warmup_ratio=0.1 if not IS_BABY_RUN else 0.0, 
+        lr_scheduler_type=Config.LR_SCHEDULER, # Config'e eklediğimiz cosine scheduler
+        
         bf16=Config.USE_BF16,
         fp16=Config.USE_FP16,
-        gradient_accumulation_steps=1 if IS_BABY_RUN else 2, 
+        gradient_accumulation_steps=Config.GRADIENT_ACCUMULATION_STEPS, 
         
         eval_strategy="steps",
         eval_steps=eval_steps,

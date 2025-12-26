@@ -1,17 +1,33 @@
+# quick_test.py
+import os
+import sys
 from src.inference import URLAnalyzer
 
-# 1. Initialize (This loads the model into your GPU/RAM)
-analyzer = URLAnalyzer("outputs/production_model")
+# Modelin nerede olduğunu belirt (Eğitim bittikten sonra buraya kaydedilir)
+MODEL_DIR = "outputs/V3-hybrid/production_model"
 
-# 2. Get input from user
-while True:
-    user_url = input("\n🔗 Enter a URL to check (or 'q' to quit): ")
-    if user_url.lower() == 'q': break
+if not os.path.exists(MODEL_DIR):
+    print(f"❌ HATA: Model bulunamadı! Lütfen önce eğitimi tamamlayın.")
+    print(f"Aranan dizin: {MODEL_DIR}")
+    sys.exit(1)
+
+try:
+    analyzer = URLAnalyzer(MODEL_DIR)
     
-    # 3. Predict
-    result = analyzer.analyze(user_url)
-    
-    # 4. Print pretty output
-    print(f"VERDICT: {result['category']}")
-    print(f"CONFIDENCE: {result['confidence']}")
-    print(f"DESCRIPTION: {result['description']}")
+    print("\n" + "="*50)
+    print("🚀 MODERN-BERT QUICK TEST")
+    print("="*50)
+
+    while True:
+        url = input("\n🔗 Test edilecek URL (çıkış: q): ")
+        if url.lower() == 'q': break
+        
+        res = analyzer.analyze(url)
+        
+        print(f"---")
+        print(f"VERDICT: {res['category']}")
+        print(f"CONFIDENCE: {res['confidence']}")
+        print(f"DESC: {res['description']}")
+
+except Exception as e:
+    print(f"❌ Bir hata oluştu: {e}")

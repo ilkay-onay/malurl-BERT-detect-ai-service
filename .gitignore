@@ -213,3 +213,4 @@ plots/
 CODEBASE_MAP.txt
 map_codebase.py
 flash_attn-2.8.3+cu130torch2.9-cp313-cp313-linux_x86_64.whl
+veriler/

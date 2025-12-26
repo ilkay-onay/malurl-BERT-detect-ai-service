@@ -1,0 +1,25 @@
+v1
+modernbert
+3 farklı veriseti kullanıldı
+0.97 f1 skoru
+
+v2
+phiutill veriseti
+1 f1 skoru
+anormallik
+============================================================
+📊 EXTERNAL VALIDATION REPORT (Model trained on PhiUSIIL -> Tested on Kaggle)
+============================================================
+              precision    recall  f1-score   support
+
+        Safe       0.35      0.09      0.15     10000
+   Malicious       0.48      0.83      0.60     10000
+
+    accuracy                           0.46     20000
+   macro avg       0.41      0.46      0.37     20000
+weighted avg       0.41      0.46      0.37     20000
+
+
+Confusion Matrix:
+True Safe: 921 | False Phish: 9079
+False Safe: 1747 | True Phish: 8253
