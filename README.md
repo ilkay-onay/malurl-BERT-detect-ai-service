@@ -1,106 +1,110 @@
 # malurl-BERT-detect-ai-service (malurl)
 
-**malurl** is a state-of-the-art AI service for detecting malicious and phishing URLs. It leverages the **ModernBERT** (2025) architecture, featuring hardware-level optimizations like Flash Attention 2 and unpadding to provide near-instant security verdicts.
+**malurl**, zararlı (malicious) ve oltalama (phishing) URL'lerini tespit etmek için geliştirilmiş, **ModernBERT** mimarisini kullanan yapay zeka tabanlı bir güvenlik aracıdır. Flash Attention 2 ve BF16 optimizasyonları ile donatılmış olup, URL yapısını analiz ederek saniyeler içinde güvenlik kararı verir.
+
+Proje kod tabanı GitHub üzerinde barındırılmaktadır; ancak eğitim verileri, eğitilmiş model ağırlıkları ve analiz çıktıları harici olarak saklanmaktadır.
 
 ---
 
-## 📁 Model Setup (Critical)
+## 📂 Kurulum ve Veri Hazırlığı (ÖNEMLİ)
 
-The brain of the service is a fine-tuned ModernBERT model. Because the weights are large, they are hosted externally.
+Projeyi klonladıktan sonra çalıştırabilmek için **Google Drive** üzerindeki gerekli klasörleri indirip proje ana dizinine yerleştirmeniz gerekmektedir.
 
-1.  **Download** the `production_model` folder from this [Google Drive Link](https://drive.google.com/drive/folders/1DqY4mCzpK4aDcvMQVeN3sISxCg3JOKXs?usp=sharing).
-2.  **Move** the entire `production_model` folder into the `Flask-API/Bert-model-files/` directory.
-3.  **Verification**: Your file tree must look like this:
-    ```text
-    malurl-BERT-detect-ai-service/
-    ├── Flask-API/
-    │   ├── app.py
-    │   └── Bert-model-files/
-    │       └── production_model/  <-- Folder from Google Drive
-    │           ├── config.json
-    │           ├── model.safetensors
-    │           └── tokenizer.json
-    ├── src/
-    ├── data/
-    └── quick_test.py
+### 1. Dosyaları İndirin
+Aşağıdaki Google Drive linkine gidin:
+🔗 **[Proje Veri ve Model Dosyaları (Google Drive)](https://drive.google.com/drive/folders/1SwNtfp3z6KRtk3iFAtfsmxAfMUEvi6Q8?usp=sharing)**
+
+### 2. Klasörleri Yerleştirin
+Drive içerisindeki şu **4 klasörü** indirin ve projenin **ana dizinine (root)** yapıştırın:
+*   `data/` (İşlenmiş eğitim ve test verileri)
+*   `outputs/` (Eğitilmiş model ağırlıkları - production_model burada bulunur)
+*   `logs/` (TensorBoard eğitim kayıtları)
+*   `plots/` (Performans grafikleri ve raporlar)
+
+### 3. Klasör Yapısı Doğrulama
+İşlem bittiğinde dosya yapınız tam olarak şöyle görünmelidir:
+
+```text
+malurl-BERT-detect-ai-service/
+├── analysis/          # Veri seti analiz scriptleri
+├── data/              <-- Drive'dan geldi
+├── logs/              <-- Drive'dan geldi
+├── outputs/           <-- Drive'dan geldi (İçinde production_model var)
+├── plots/             <-- Drive'dan geldi
+├── src/               # Eğitim ve Inference kaynak kodları
+├── quick_test.py      # Hızlı test aracı
+├── validate_external.py # Harici veri doğrulama aracı
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## 🚀 Python Ortamı Kurulumu
+
+Python 3.10 veya üzeri önerilir.
+
+1.  **Sanal Ortam Oluşturun:**
+    ```bash
+    python -m venv venv
+    
+    # Windows
+    .\venv\Scripts\activate
+    
+    # Mac/Linux
+    source venv/bin/activate
     ```
 
----
-
-## 🚀 Python Environment Setup
-
-The following steps will guide you through setting up a native Python environment for inference and training.
-
-### 1. Create & Activate Virtual Environment
-```bash
-# From the project root
-python -m venv venv
-
-# Linux/macOS
-source venv/bin/activate
-
-# Windows
-# .\venv\Scripts\activate
-```
-
-### 2. Install Dependencies
-```bash
-pip install --upgrade pip
-
-# Core AI Stack (Optimized for CUDA 12.1 - adjust if using different CUDA)
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-
-# ModernBERT & Data Processing
-pip install transformers==4.48.0 datasets accelerate evaluate scikit-learn pandas
-
-# Flash Attention 2 (Optional but recommended for RTX 30/40 series GPUs)
-pip install flash-attn --no-build-isolation
-
-# API Dependencies
-pip install flask flask-cors flask-sqlalchemy flask-jwt-extended flask-bcrypt python-dotenv
-```
+2.  **Bağımlılıkları Yükleyin:**
+    ```bash
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    ```
+    *(Not: NVIDIA GPU kullanıyorsanız, PyTorch'un CUDA sürümünü yüklediğinizden emin olun.)*
 
 ---
 
-## 🛠️ Usage
+## 🛠️ Kullanım
 
-### 🔍 Quick Test (CLI)
-Run a local check to verify the model is loaded correctly:
+Bu projeyi üç farklı şekilde kullanabilirsiniz:
+
+### 1. Hızlı Test (Quick Test)
+Modeli manuel olarak test etmek ve URL'leri tek tek denemek için:
 ```bash
 python quick_test.py
 ```
+*Bu script, `outputs/` klasöründeki modeli yükler ve konsol üzerinden interaktif bir test ortamı sunar.*
 
-### 🌐 Launch the API Service
-Start the backend that powers external integrations (like the browser extension):
+### 2. Harici Doğrulama (External Validation)
+Modelin görmediği harici bir veri seti (örn. Kaggle verisi) üzerinde toplu performansını ölçmek için:
 ```bash
-cd Flask-API
-python app.py
+python validate_external.py
 ```
-*The service runs on `http://localhost:5001` by default.*
+*Bu script `data/raw/malicious_phish.csv` (veya belirtilen harici dosya) üzerinde toplu tahmin yapar ve başarı raporu sunar.*
 
-### 🧠 Training & Data Pipeline
-If you want to retrain the model with fresh data:
-1.  **Merge & Whitelist**: `python -m src.data_manager` (Resolves label conflicts and protects high-trust domains).
-2.  **Full Train**: `python -m src.train` (Runs the ModernBERT training pipeline).
+### 3. Yeniden Eğitim (Training Pipeline)
+Eğer `data/` klasöründeki verilerle modeli sıfırdan eğitmek isterseniz:
 
----
+```bash
+# 1. Veri Hazırlığı (Opsiyonel - ham veriden csv üretir)
+python -m src.data_prep
 
-## 📊 Technical Specifications (2025 Update)
-
-| Spec | Value |
-| :--- | :--- |
-| **Model Type** | ModernBERT-base (Encoder-only) |
-| **Context Window** | 256 Tokens |
-| **Optimizations** | Flash Attention 2, Unpadding, BF16 |
-| **Inference Speed** | ~10ms per URL (GPU), ~50ms (CPU) |
-| **Training Dataset** | 650,000+ unique balanced URLs |
-| **Metric (F1)** | ~0.97 (Validation/Test) |
+# 2. Eğitimi Başlat
+python -m src.train
+```
 
 ---
 
-## 🛡️ Professional Methodology
-*   **Conflict Resolution**: Automatically resolves nearly 100,000 conflicting labels by prioritizing live feeds (PhishTank) over historical CSVs.
-*   **Safe Domain Whitelisting**: Implements a hard whitelist for global root domains (Google, Apple, Microsoft) to eliminate false positives on safe infrastructure.
-*   **Advanced Tracking**: Full TensorBoard logging and technical report generation (ROC/PR curves) included in the `src/` logic.
+## 📊 Model Mimarisi ve Performans
 
-**Disclaimer**: This model analyzes URL structure only. For production deployments, it is recommended to combine this with domain age and reputation lookups.
+*   **Model:** ModernBERT-base (Encoder-only)
+*   **Context Window:** 256 Token
+*   **Optimizasyon:** Flash Attention 2, Unpadding, BF16
+*   **Eğitim Verisi:** ~650.000+ dengelenmiş URL
+
+Detaylı performans grafikleri (Confusion Matrix, ROC Curve) `plots/` klasöründe yer almaktadır.
+
+---
+
+## 🛡️ Yasal Uyarı
+Bu proje eğitim ve araştırma amaçlı geliştirilmiştir. Model sadece URL'nin sözdizimsel (lexical) yapısını analiz eder. Prodüksiyon ortamında Domain Reputation ve WHOIS sorguları ile birlikte kullanılması önerilir.
