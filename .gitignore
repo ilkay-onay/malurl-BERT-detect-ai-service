@@ -20,6 +20,7 @@ plots/
 .ipynb_checkpoints/
 CODEBASE_MAP.txt
 veriler/
+data/
 outputs/
 *.csv
 *.json
