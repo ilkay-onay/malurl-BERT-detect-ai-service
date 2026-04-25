@@ -2,8 +2,8 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
-[![Hugging Face Model](https://img.shields.io/badge/🤗%20Hugging%20Face-Model-yellow)](https://huggingface.co/ilkayonay/modernbert-phishing-detector)
-[![Hugging Face Spaces](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/ilkayonay/modernbert-phishing-detector)
+[![Hugging Face Model](https://img.shields.io/badge/🤗%20Hugging%20Face-Model-yellow)](https://huggingface.co/ilkayO/modernbert-phishing-detector)
+[![Hugging Face Spaces](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/ilkayO/modernbert-phishing-detector)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ilkay-onay/malurl-BERT-detect-ai-service/blob/main/colab_demo.ipynb)
 
 An enterprise-grade, high-performance REST API service that leverages a fine-tuned **ModernBERT** model to detect malicious and phishing URLs. Built with modern ML practices focusing on real-world generalization and strict prevention of data leakage.
@@ -12,8 +12,8 @@ An enterprise-grade, high-performance REST API service that leverages a fine-tun
 
 We have fully migrated the model weights and inference pipelines to the cloud. You don't need to download heavy weight files to test the model!
 
-* 🤖 **Model Card & Weights:** [ilkayonay/modernbert-phishing-detector](https://huggingface.co/ilkayonay/modernbert-phishing-detector)
-* 🖥️ **Interactive Web UI (Gradio):** [Test it live on Hugging Face Spaces](https://huggingface.co/spaces/ilkayonay/modernbert-phishing-detector)
+* 🤖 **Model Card & Weights:** [ilkayO/modernbert-phishing-detector](https://huggingface.co/ilkayO/modernbert-phishing-detector)
+* 🖥️ **Interactive Web UI (Gradio):** [Test it live on Hugging Face Spaces](https://huggingface.co/spaces/ilkayO/modernbert-phishing-detector)
 * 🔬 **Google Colab Notebook:** [Run Inference in Browser](https://colab.research.google.com/github/ilkay-onay/malurl-BERT-detect-ai-service/blob/main/colab_demo.ipynb)
 
 ---
