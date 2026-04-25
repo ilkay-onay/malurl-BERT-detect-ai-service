@@ -1,15 +1,15 @@
 # app.py
 """
-FastAPI Web Servisi - ModernBERT URL Phishing Detector
+FastAPI Web Service - ModernBERT URL Phishing Detector
 =======================================================
-Bu servis, eğitilmiş ModernBERT modelini kullanarak URL'leri analiz eder
-ve phishing/malicious içerik tespiti yapar.
+This service uses the fine-tuned ModernBERT model to analyze URLs
+and detect phishing/malicious content.
 
-Endpoint'ler:
-    - POST /analyze - Tekli URL analizi
-    - POST /analyze/batch - Toplu URL analizi
-    - GET /health - Servis sağlık kontrolü
-    - GET /model/info - Model bilgileri
+Endpoints:
+    - POST /analyze       - Single URL analysis
+    - POST /analyze/batch - Batch URL analysis
+    - GET /health         - Service health check
+    - GET /model/info     - Model metadata
 """
 
 from fastapi import FastAPI, HTTPException, status
@@ -23,7 +23,7 @@ import logging
 
 from src.inference import URLAnalyzer
 
-# Logging ayarları
+# Logging configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -34,19 +34,17 @@ logger = logging.getLogger(__name__)
 analyzer: Optional[URLAnalyzer] = None
 MODEL_DIR = os.getenv("MODEL_DIR", "outputs/V3-hybrid/production_model")
 
-# Pydantic Modelleri
+# Pydantic Models
 class URLRequest(BaseModel):
-    """Tekli URL analiz isteği"""
-    url: str = Field(..., description="Analiz edilecek URL", min_length=3, max_length=2048)
+    """Single URL analysis request"""
+    url: str = Field(..., description="URL to be analyzed", min_length=3, max_length=2048)
     
     @validator('url')
     def validate_url(cls, v):
         v = v.strip()
         if not v:
-            raise ValueError('URL boş olamaz')
-        # Basit URL format kontrolü
+            raise ValueError('URL cannot be empty')
         if not any(v.startswith(prefix) for prefix in ['http://', 'https://', 'ftp://', 'www.']):
-            # Eğer protokol yoksa http:// ekle
             v = 'http://' + v
         return v
 
@@ -57,124 +55,84 @@ class URLRequest(BaseModel):
             }
         }
 
-
 class BatchURLRequest(BaseModel):
-    """Toplu URL analiz isteği"""
-    urls: List[str] = Field(..., description="Analiz edilecek URL listesi", min_items=1, max_items=100)
+    """Batch URL analysis request"""
+    urls: List[str] = Field(..., description="List of URLs to be analyzed", min_items=1, max_items=100)
     
     @validator('urls')
     def validate_urls(cls, v):
         if len(v) > 100:
-            raise ValueError('Maksimum 100 URL gönderilebilir')
+            raise ValueError('Maximum 100 URLs can be sent at once')
         return [url.strip() for url in v if url.strip()]
 
-    class Config:
-        schema_extra = {
-            "example": {
-                "urls": [
-                    "https://google.com",
-                    "https://secure-login-verify.suspicious-domain.tk/login",
-                    "http://paypal-verify-account.xyz/secure"
-                ]
-            }
-        }
-
-
 class AnalysisResponse(BaseModel):
-    """URL analiz sonucu"""
-    url: str = Field(..., description="Analiz edilen URL")
-    risk: str = Field(..., description="Risk seviyesi: low, medium, high")
-    category: str = Field(..., description="Kategori: LEGITIMATE, SUSPICIOUS, PHISHING")
-    confidence: str = Field(..., description="Güven skoru (yüzde)")
-    description: str = Field(..., description="Sonuç açıklaması")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "url": "https://secure-login-verify.suspicious-domain.tk/login",
-                "risk": "high",
-                "category": "PHISHING",
-                "confidence": "94.23%",
-                "description": "Critical Match: Malicious pattern detected."
-            }
-        }
-
+    """URL analysis response"""
+    url: str = Field(..., description="Analyzed URL")
+    risk: str = Field(..., description="Risk level: low, medium, high")
+    category: str = Field(..., description="Category: LEGITIMATE, SUSPICIOUS, PHISHING")
+    confidence: str = Field(..., description="Confidence score (percentage)")
+    description: str = Field(..., description="Result description")
 
 class BatchAnalysisResponse(BaseModel):
-    """Toplu URL analiz sonucu"""
-    total: int = Field(..., description="Toplam analiz edilen URL sayısı")
-    results: List[AnalysisResponse] = Field(..., description="Analiz sonuçları")
-    summary: dict = Field(..., description="Özet istatistikler")
-
+    """Batch URL analysis response"""
+    total: int = Field(..., description="Total number of analyzed URLs")
+    results: List[AnalysisResponse] = Field(..., description="Analysis results")
+    summary: dict = Field(..., description="Summary statistics")
 
 class HealthResponse(BaseModel):
-    """Servis sağlık durumu"""
-    status: str = Field(..., description="Servis durumu")
-    model_loaded: bool = Field(..., description="Model yüklü mü?")
-    model_path: str = Field(..., description="Model dizini")
-    device: Optional[str] = Field(None, description="Kullanılan cihaz (CPU/CUDA)")
-
+    """Service health status"""
+    status: str = Field(..., description="Service status")
+    model_loaded: bool = Field(..., description="Is the model loaded?")
+    model_path: str = Field(..., description="Model directory")
+    device: Optional[str] = Field(None, description="Device used (CPU/CUDA)")
 
 class ModelInfoResponse(BaseModel):
-    """Model bilgileri"""
-    model_path: str = Field(..., description="Model dizini")
-    device: str = Field(..., description="Kullanılan cihaz")
-    dtype: str = Field(..., description="Veri tipi (float32/bfloat16)")
-    attention_implementation: str = Field(..., description="Attention implementasyonu")
+    """Model metadata"""
+    model_path: str = Field(..., description="Model directory")
+    device: str = Field(..., description="Device used")
+    dtype: str = Field(..., description="Data type (float32/bfloat16)")
+    attention_implementation: str = Field(..., description="Attention implementation")
 
-
-# Lifecycle management
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Uygulama başlangıç ve kapanış işlemleri"""
+    """Application lifecycle events"""
     global analyzer
-    
-    # Startup
-    logger.info(f"🚀 FastAPI servisi başlatılıyor...")
-    logger.info(f"📁 Model dizini: {MODEL_DIR}")
+    logger.info(f"🚀 Starting FastAPI service...")
+    logger.info(f"📁 Model directory: {MODEL_DIR}")
     
     if not os.path.exists(MODEL_DIR):
-        logger.error(f"❌ Model bulunamadı: {MODEL_DIR}")
-        logger.error("⚠️ Servis model olmadan başlatılıyor (health endpoint hariç API çalışmayacak)")
+        logger.error(f"❌ Model not found: {MODEL_DIR}")
+        logger.error("⚠️ Starting service without model (only health endpoint will work)")
     else:
         try:
             analyzer = URLAnalyzer(MODEL_DIR)
-            logger.info("✅ Model başarıyla yüklendi")
+            logger.info("✅ Model loaded successfully")
         except Exception as e:
-            logger.error(f"❌ Model yükleme hatası: {e}")
+            logger.error(f"❌ Error loading model: {e}")
             analyzer = None
-    
     yield
-    
-    # Shutdown
-    logger.info("🛑 FastAPI servisi kapatılıyor...")
+    logger.info("🛑 Shutting down FastAPI service...")
     analyzer = None
 
-
-# FastAPI uygulaması
 app = FastAPI(
     title="ModernBERT URL Phishing Detector API",
-    description="URL'leri analiz ederek phishing/malicious içerik tespiti yapan AI destekli API servisi",
+    description="AI-powered API service for analyzing URLs and detecting phishing/malicious content",
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
-# CORS middleware (Frontend entegrasyonu için)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Production'da spesifik domain'ler belirtilmeli
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# Endpoint'ler
 @app.get("/", tags=["Root"])
 async def root():
-    """Ana sayfa - API bilgileri"""
     return {
         "message": "ModernBERT URL Phishing Detector API",
         "version": "1.0.0",
@@ -187,10 +145,8 @@ async def root():
         }
     }
 
-
 @app.get("/health", response_model=HealthResponse, tags=["Health"])
 async def health_check():
-    """Servis sağlık kontrolü"""
     return HealthResponse(
         status="healthy" if analyzer is not None else "degraded",
         model_loaded=analyzer is not None,
@@ -198,16 +154,10 @@ async def health_check():
         device=analyzer.device.type if analyzer else None
     )
 
-
 @app.get("/model/info", response_model=ModelInfoResponse, tags=["Model"])
 async def model_info():
-    """Model detaylı bilgileri"""
     if analyzer is None:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Model yüklenmedi. Lütfen model dosyalarını kontrol edin."
-        )
-    
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Model not loaded.")
     return ModelInfoResponse(
         model_path=MODEL_DIR,
         device=analyzer.device.type,
@@ -215,62 +165,30 @@ async def model_info():
         attention_implementation=analyzer.attn_implementation
     )
 
-
 @app.post("/analyze", response_model=AnalysisResponse, tags=["Analysis"])
 async def analyze_url(request: URLRequest):
-    """
-    Tekli URL analizi yapar
-    
-    - **url**: Analiz edilecek URL (zorunlu)
-    
-    Returns:
-        AnalysisResponse: URL analiz sonucu
-    """
     if analyzer is None:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Model yüklenmedi. Servis şu an kullanılamıyor."
-        )
-    
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Model not loaded.")
     try:
         result = analyzer.analyze(request.url)
         return AnalysisResponse(**result)
     except Exception as e:
-        logger.error(f"Analiz hatası: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"URL analizi sırasında hata oluştu: {str(e)}"
-        )
-
+        logger.error(f"Analysis error: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 @app.post("/analyze/batch", response_model=BatchAnalysisResponse, tags=["Analysis"])
 async def analyze_batch_urls(request: BatchURLRequest):
-    """
-    Toplu URL analizi yapar (maksimum 100 URL)
-    
-    - **urls**: Analiz edilecek URL listesi (zorunlu, max 100)
-    
-    Returns:
-        BatchAnalysisResponse: Toplu analiz sonuçları ve özet istatistikler
-    """
     if analyzer is None:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Model yüklenmedi. Servis şu an kullanılamıyor."
-        )
-    
-    results = []
-    errors = []
-    
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Model not loaded.")
+    results, errors = [], []
     for url in request.urls:
         try:
             result = analyzer.analyze(url)
             results.append(AnalysisResponse(**result))
         except Exception as e:
-            logger.error(f"URL analiz hatası ({url}): {e}")
+            logger.error(f"Batch Analysis error ({url}): {e}")
             errors.append({"url": url, "error": str(e)})
     
-    # Özet istatistikler
     summary = {
         "total_analyzed": len(results),
         "total_errors": len(errors),
@@ -281,41 +199,16 @@ async def analyze_batch_urls(request: BatchURLRequest):
         "medium_risk": sum(1 for r in results if r.risk == "medium"),
         "low_risk": sum(1 for r in results if r.risk == "low")
     }
-    
-    if errors:
-        summary["errors"] = errors
-    
-    return BatchAnalysisResponse(
-        total=len(results),
-        results=results,
-        summary=summary
-    )
+    if errors: summary["errors"] = errors
+    return BatchAnalysisResponse(total=len(results), results=results, summary=summary)
 
-
-# Hata yönetimi
 @app.exception_handler(ValueError)
 async def value_error_handler(request, exc):
-    """Validation hataları için özel handler"""
-    return {
-        "error": "Validation Error",
-        "detail": str(exc)
-    }
-
+    return {"error": "Validation Error", "detail": str(exc)}
 
 if __name__ == "__main__":
     import uvicorn
-    
-    # Komut satırı argümanları
     port = int(os.getenv("PORT", "8000"))
     host = os.getenv("HOST", "0.0.0.0")
-    
-    logger.info(f"🌐 Servis başlatılıyor: {host}:{port}")
-    logger.info(f"📚 Dokümantasyon: http://{host}:{port}/docs")
-    
-    uvicorn.run(
-        "app:app",
-        host=host,
-        port=port,
-        reload=True,  # Development için otomatik yeniden yükleme
-        log_level="info"
-    )
+    logger.info(f"🌐 Service starting: {host}:{port}")
+    uvicorn.run("app:app", host=host, port=port, reload=True, log_level="info")

@@ -53,7 +53,7 @@ class URLAnalyzer:
         if phish_prob > 0.85:
             risk, category = "high", "PHISHING"
             desc = "Critical Match: Malicious pattern detected."
-        elif phish_prob > 0.50:
+        elif phish_prob > 0.60:
             risk, category = "medium", "SUSPICIOUS"
             desc = "Caution: Anomalous structure detected."
         else:

@@ -1,88 +1,59 @@
-# malurl-BERT-detect-ai-service (malurl)
+# 🛡️ ModernBERT URL Phishing Detector (AI Service)
 
-**malurl**, zararlı (malicious) ve oltalama (phishing) URL'lerini tespit etmek için geliştirilmiş, **ModernBERT** mimarisini kullanan yapay zeka tabanlı bir güvenlik aracıdır. Flash Attention 2 ve BF16 optimizasyonları ile donatılmış olup, URL yapısını analiz ederek saniyeler içinde güvenlik kararı verir.
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C.svg?logo=pytorch)](https://pytorch.org/)
+[![Model](https://img.shields.io/badge/Model-ModernBERT--base-yellow.svg)](https://huggingface.co/answerdotai/ModernBERT-base)
 
-Proje kod tabanı GitHub üzerinde barındırılmaktadır; ancak eğitim verileri, eğitilmiş model ağırlıkları ve analiz çıktıları harici olarak saklanmaktadır.
+An enterprise-grade, high-performance REST API service that leverages a fine-tuned **ModernBERT** model to detect malicious and phishing URLs. Built with modern ML practices focusing on real-world generalization and strict prevention of data leakage.
 
-## Overview
+## ✨ Key Features
+* **Advanced NLP Architecture:** Fine-tuned `answerdotai/ModernBERT-base` (149M Params).
+* **Hardware Optimized:** Accelerated with `TorchDynamo (torch.compile)`, BF16 Mixed Precision, and Flash Attention 2.
+* **Production Ready API:** Asynchronous FastAPI implementation with Pydantic validation, batch processing, and built-in health checks.
+* **Robust Generalization:** Trained using global deduplication, URL protocol sanitization, and **Domain-Based Group Splitting** to prevent structural overfitting.
 
-The `malurl-BERT-detect-ai-service` project is a sophisticated AI-powered service designed for the real-time detection of malicious and phishing URLs. It leverages the power of the ModernBERT architecture, a transformer-based model optimized for understanding the nuances of URL structures. The service is engineered for high performance, incorporating advanced techniques such as Flash Attention 2 and BF16 (Brain Floating Point) precision to achieve rapid inference times, often within milliseconds. This allows for efficient integration into security workflows, web filtering systems, and threat intelligence platforms. The core functionality revolves around analyzing the lexical and structural properties of URLs to classify them as legitimate, suspicious, or outright malicious/phishing.
+## 🔬 The ML Journey: From Overfitting to Robust Generalization (See `RESEARCH_LOG.md`)
+Training a phishing detector is notorious for dataset biases. To ensure enterprise-grade reliability, this model evolved through rigorous R&D:
+* **Phase 1 (The Deceptive Baseline):** Achieved 100% F1 on standard datasets, but failed on Out-of-Distribution (OOD) data due to structural overfitting (memorizing domains instead of patterns).
+* **Phase 2 (Architectural Fix):** Merged multiple datasets, implemented global deduplication, and applied **GroupShuffleSplit** to isolate domain trees.
+* **Phase 3 (Production):** The final model achieves a robust, true **0.83 F1-Score** on entirely unseen domains, successfully analyzing URL depth, character entropy, and keyword morphology.
 
-## Features
+## 🚀 Installation & Usage
 
-*   **ModernBERT Architecture:** Utilizes a fine-tuned ModernBERT model for deep understanding of URL patterns.
-*   **High-Performance Inference:** Optimized with Flash Attention 2 and BF16 precision for low-latency predictions.
-*   **Real-time Detection:** Capable of analyzing single URLs or batches of URLs with high throughput.
-*   **Comprehensive Classification:** Categorizes URLs into `LEGITIMATE`, `SUSPICIOUS`, and `PHISHING` with associated risk levels (`low`, `medium`, `high`).
-*   **Confidence Scoring:** Provides a confidence score for each prediction, indicating the model's certainty.
-*   **FastAPI Web Service:** Exposes a robust RESTful API for easy integration with other applications.
-*   **Interactive API Documentation:** Includes Swagger UI and ReDoc for seamless API exploration and testing.
-*   **Batch Processing:** Supports analyzing multiple URLs in a single request for efficiency.
-*   **Health Check Endpoint:** Allows monitoring of the service's operational status and model loading.
-*   **Model Information Endpoint:** Provides details about the loaded model, including its path, device, and data type.
-*   **Production-Ready Features:** Includes considerations for rate limiting, CORS, and HTTPS for secure deployment.
-*   **Docker Support:** Provides Dockerfile and Docker Compose configurations for simplified deployment.
-
-## Project Structure
-
-```text
-malurl-BERT-detect-ai-service/
-├── analysis/          # Data analysis and auditing scripts
-│   ├── audit_datasets.py
-│   ├── check.py
-│   ├── data_inspector.py
-│   └── dataset_128or256.py
-├── data/              # Processed training, validation, and test datasets
-├── logs/              # Training logs and TensorBoard data
-├── outputs/           # Trained model weights and artifacts (production_model)
-├── plots/             # Performance graphs and reports
-├── src/               # Core source code for training and inference
-│   ├── config.py      # Configuration settings
-│   ├── data_manager.py # Handles dataset loading and tokenization
-│   ├── data_prep.py   # Script for data preprocessing and splitting
-│   ├── inference.py   # Implements the URL analysis logic
-│   ├── metrics.py     # Calculates and visualizes performance metrics
-│   └── train.py       # The main training pipeline script
-├── API_DOCUMENTATION.md
-├── API_QUICKSTART.md
-├── LICENSE
-├── README.md
-├── app.py             # FastAPI application entry point
-├── deney-notları.txt  # Detailed project log and experimental notes
-├── quick_test.py      # Script for quick manual testing of the model
-├── requirements.txt   # Project dependencies
-└── test_api.py        # Script for automated API endpoint testing
-└── validate_external.py # Script for validating the model on external datasets
+### 1. Run with Docker (Recommended)
+```bash
+docker build -t modernbert-phishing-detector .
+docker run -p 8000:8000 modernbert-phishing-detector
 ```
 
-## Getting Started
-
-### 1. Install Dependencies
-
+### 2. Local Setup
 ```bash
+git clone https://github.com/ilkay-onay/malurl-BERT-detect-ai-service.git
+cd malurl-BERT-detect-ai-service
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-### 2. Start the API Service
-
-You can start the API using Python directly or via `uvicorn`.
-
-**Method 1: Using Python**
-```bash
 python app.py
 ```
 
-**Method 2: Using Uvicorn (Recommended for Production)**
+## 📡 API Endpoints
+
+### Single URL Analysis
+`POST /analyze`
 ```bash
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+curl -X 'POST' \
+  'http://localhost:8000/analyze' \
+  -H 'Content-Type: application/json' \
+  -d '{"url": "https://secure-login-verify.suspicious-domain.tk/login"}'
 ```
 
-### 3. Access API Documentation
+### Batch Analysis
+`POST /analyze/batch` (Analyzes up to 100 URLs simultaneously)
 
-Once the API is running, you can access interactive documentation at:
-*   **Swagger UI:** `http://localhost:8000/docs`
-*   **ReDoc:** `http://localhost:8000/redoc`
+## 🧑‍💻 Author
+**Ilkay ONAY**
+* [LinkedIn](https://linkedin.com/in/ilkay-onay-391905254)
+* [GitHub](https://github.com/ilkay-onay)
 
-## License
-
-This project is licensed under the **GNU General Public License v3.0**. See the `LICENSE` file for more details.
+*This project demonstrates applied AI research, bridging the gap between theoretical model training and real-world software engineering.*
