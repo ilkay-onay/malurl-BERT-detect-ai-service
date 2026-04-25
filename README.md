@@ -4,107 +4,85 @@
 
 Proje kod tabanı GitHub üzerinde barındırılmaktadır; ancak eğitim verileri, eğitilmiş model ağırlıkları ve analiz çıktıları harici olarak saklanmaktadır.
 
----
+## Overview
 
-## 📂 Kurulum ve Veri Hazırlığı (ÖNEMLİ)
+The `malurl-BERT-detect-ai-service` project is a sophisticated AI-powered service designed for the real-time detection of malicious and phishing URLs. It leverages the power of the ModernBERT architecture, a transformer-based model optimized for understanding the nuances of URL structures. The service is engineered for high performance, incorporating advanced techniques such as Flash Attention 2 and BF16 (Brain Floating Point) precision to achieve rapid inference times, often within milliseconds. This allows for efficient integration into security workflows, web filtering systems, and threat intelligence platforms. The core functionality revolves around analyzing the lexical and structural properties of URLs to classify them as legitimate, suspicious, or outright malicious/phishing.
 
-Projeyi klonladıktan sonra çalıştırabilmek için **Google Drive** üzerindeki gerekli klasörleri indirip proje ana dizinine yerleştirmeniz gerekmektedir.
+## Features
 
-### 1. Dosyaları İndirin
-Aşağıdaki Google Drive linkine gidin:
-🔗 **[Proje Veri ve Model Dosyaları (Google Drive)](https://drive.google.com/drive/folders/1SwNtfp3z6KRtk3iFAtfsmxAfMUEvi6Q8?usp=sharing)**
+*   **ModernBERT Architecture:** Utilizes a fine-tuned ModernBERT model for deep understanding of URL patterns.
+*   **High-Performance Inference:** Optimized with Flash Attention 2 and BF16 precision for low-latency predictions.
+*   **Real-time Detection:** Capable of analyzing single URLs or batches of URLs with high throughput.
+*   **Comprehensive Classification:** Categorizes URLs into `LEGITIMATE`, `SUSPICIOUS`, and `PHISHING` with associated risk levels (`low`, `medium`, `high`).
+*   **Confidence Scoring:** Provides a confidence score for each prediction, indicating the model's certainty.
+*   **FastAPI Web Service:** Exposes a robust RESTful API for easy integration with other applications.
+*   **Interactive API Documentation:** Includes Swagger UI and ReDoc for seamless API exploration and testing.
+*   **Batch Processing:** Supports analyzing multiple URLs in a single request for efficiency.
+*   **Health Check Endpoint:** Allows monitoring of the service's operational status and model loading.
+*   **Model Information Endpoint:** Provides details about the loaded model, including its path, device, and data type.
+*   **Production-Ready Features:** Includes considerations for rate limiting, CORS, and HTTPS for secure deployment.
+*   **Docker Support:** Provides Dockerfile and Docker Compose configurations for simplified deployment.
 
-### 2. Klasörleri Yerleştirin
-Drive içerisindeki şu **4 klasörü** indirin ve projenin **ana dizinine (root)** yapıştırın:
-*   `data/` (İşlenmiş eğitim ve test verileri)
-*   `outputs/` (Eğitilmiş model ağırlıkları - production_model burada bulunur)
-*   `logs/` (TensorBoard eğitim kayıtları)
-*   `plots/` (Performans grafikleri ve raporlar)
-
-### 3. Klasör Yapısı Doğrulama
-İşlem bittiğinde dosya yapınız tam olarak şöyle görünmelidir:
+## Project Structure
 
 ```text
 malurl-BERT-detect-ai-service/
-├── analysis/          # Veri seti analiz scriptleri
-├── data/              <-- Drive'dan geldi
-├── logs/              <-- Drive'dan geldi
-├── outputs/           <-- Drive'dan geldi (İçinde production_model var)
-├── plots/             <-- Drive'dan geldi
-├── src/               # Eğitim ve Inference kaynak kodları
-├── quick_test.py      # Hızlı test aracı
-├── validate_external.py # Harici veri doğrulama aracı
-├── requirements.txt
-└── README.md
+├── analysis/          # Data analysis and auditing scripts
+│   ├── audit_datasets.py
+│   ├── check.py
+│   ├── data_inspector.py
+│   └── dataset_128or256.py
+├── data/              # Processed training, validation, and test datasets
+├── logs/              # Training logs and TensorBoard data
+├── outputs/           # Trained model weights and artifacts (production_model)
+├── plots/             # Performance graphs and reports
+├── src/               # Core source code for training and inference
+│   ├── config.py      # Configuration settings
+│   ├── data_manager.py # Handles dataset loading and tokenization
+│   ├── data_prep.py   # Script for data preprocessing and splitting
+│   ├── inference.py   # Implements the URL analysis logic
+│   ├── metrics.py     # Calculates and visualizes performance metrics
+│   └── train.py       # The main training pipeline script
+├── API_DOCUMENTATION.md
+├── API_QUICKSTART.md
+├── LICENSE
+├── README.md
+├── app.py             # FastAPI application entry point
+├── deney-notları.txt  # Detailed project log and experimental notes
+├── quick_test.py      # Script for quick manual testing of the model
+├── requirements.txt   # Project dependencies
+└── test_api.py        # Script for automated API endpoint testing
+└── validate_external.py # Script for validating the model on external datasets
 ```
 
----
+## Getting Started
 
-## 🚀 Python Ortamı Kurulumu
-
-Python 3.10 veya üzeri önerilir.
-
-1.  **Sanal Ortam Oluşturun:**
-    ```bash
-    python -m venv venv
-    
-    # Windows
-    .\venv\Scripts\activate
-    
-    # Mac/Linux
-    source venv/bin/activate
-    ```
-
-2.  **Bağımlılıkları Yükleyin:**
-    ```bash
-    pip install --upgrade pip
-    pip install -r requirements.txt
-    ```
-    *(Not: NVIDIA GPU kullanıyorsanız, PyTorch'un CUDA sürümünü yüklediğinizden emin olun.)*
-
----
-
-## 🛠️ Kullanım
-
-Bu projeyi üç farklı şekilde kullanabilirsiniz:
-
-### 1. Hızlı Test (Quick Test)
-Modeli manuel olarak test etmek ve URL'leri tek tek denemek için:
-```bash
-python quick_test.py
-```
-*Bu script, `outputs/` klasöründeki modeli yükler ve konsol üzerinden interaktif bir test ortamı sunar.*
-
-### 2. Harici Doğrulama (External Validation)
-Modelin görmediği harici bir veri seti (örn. Kaggle verisi) üzerinde toplu performansını ölçmek için:
-```bash
-python validate_external.py
-```
-*Bu script `data/raw/malicious_phish.csv` (veya belirtilen harici dosya) üzerinde toplu tahmin yapar ve başarı raporu sunar.*
-
-### 3. Yeniden Eğitim (Training Pipeline)
-Eğer `data/` klasöründeki verilerle modeli sıfırdan eğitmek isterseniz:
+### 1. Install Dependencies
 
 ```bash
-# 1. Veri Hazırlığı (Opsiyonel - ham veriden csv üretir)
-python -m src.data_prep
-
-# 2. Eğitimi Başlat
-python -m src.train
+pip install -r requirements.txt
 ```
 
----
+### 2. Start the API Service
 
-## 📊 Model Mimarisi ve Performans
+You can start the API using Python directly or via `uvicorn`.
 
-*   **Model:** ModernBERT-base (Encoder-only)
-*   **Context Window:** 256 Token
-*   **Optimizasyon:** Flash Attention 2, Unpadding, BF16
-*   **Eğitim Verisi:** ~650.000+ dengelenmiş URL
+**Method 1: Using Python**
+```bash
+python app.py
+```
 
-Detaylı performans grafikleri (Confusion Matrix, ROC Curve) `plots/` klasöründe yer almaktadır.
+**Method 2: Using Uvicorn (Recommended for Production)**
+```bash
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+```
 
----
+### 3. Access API Documentation
 
-## 🛡️ Yasal Uyarı
-Bu proje eğitim ve araştırma amaçlı geliştirilmiştir. Model sadece URL'nin sözdizimsel (lexical) yapısını analiz eder. Prodüksiyon ortamında Domain Reputation ve WHOIS sorguları ile birlikte kullanılması önerilir.
+Once the API is running, you can access interactive documentation at:
+*   **Swagger UI:** `http://localhost:8000/docs`
+*   **ReDoc:** `http://localhost:8000/redoc`
+
+## License
+
+This project is licensed under the **GNU General Public License v3.0**. See the `LICENSE` file for more details.
