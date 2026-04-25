@@ -19,3 +19,9 @@ plots/
 .idea/
 .ipynb_checkpoints/
 CODEBASE_MAP.txt
+veriler/
+outputs/
+*.csv
+*.json
+*.pt
+*.pth
