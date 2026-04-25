@@ -51,9 +51,16 @@ curl -X 'POST' \
 ### Batch Analysis
 `POST /analyze/batch` (Analyzes up to 100 URLs simultaneously)
 
-## 🧑‍💻 Author
+## 🧑‍💻 Authors & Contributors
+
 **Ilkay ONAY**
 * [LinkedIn](https://linkedin.com/in/ilkay-onay-391905254)
 * [GitHub](https://github.com/ilkay-onay)
+
+**Bayram BAYRAKTAR**
+* [LinkedIn](https://tr.linkedin.com/in/bayram-bayraktar)
+* [GitHub](https://github.com/Bayrak-tar)
+
+*This project demonstrates applied AI research, bridging the gap between theoretical model training and real-world software engineering.*
 
 *This project demonstrates applied AI research, bridging the gap between theoretical model training and real-world software engineering.*
