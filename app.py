@@ -93,23 +93,25 @@ class ModelInfoResponse(BaseModel):
     dtype: str = Field(..., description="Data type (float32/bfloat16)")
     attention_implementation: str = Field(..., description="Attention implementation")
 
+# Lifecycle management
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifecycle events"""
     global analyzer
     logger.info(f"🚀 Starting FastAPI service...")
-    logger.info(f"📁 Model directory: {MODEL_DIR}")
     
-    if not os.path.exists(MODEL_DIR):
-        logger.error(f"❌ Model not found: {MODEL_DIR}")
-        logger.error("⚠️ Starting service without model (only health endpoint will work)")
-    else:
-        try:
-            analyzer = URLAnalyzer(MODEL_DIR)
-            logger.info("✅ Model loaded successfully")
-        except Exception as e:
-            logger.error(f"❌ Error loading model: {e}")
-            analyzer = None
+    # Model yolu olarak Hugging Face reposunu ver (Kendi kullanıcı adını yaz)
+    HF_MODEL_ID = os.getenv("MODEL_DIR", "ilkayO/modernbert-phishing-detector")
+    logger.info(f"📁 Loading model: {HF_MODEL_ID}")
+    
+    try:
+        # URLAnalyzer artık direkt Hugging Face'den indirecek!
+        analyzer = URLAnalyzer(HF_MODEL_ID)
+        logger.info("✅ Model loaded successfully from Hugging Face / Cache")
+    except Exception as e:
+        logger.error(f"❌ Error loading model: {e}")
+        analyzer = None
+        
     yield
     logger.info("🛑 Shutting down FastAPI service...")
     analyzer = None
